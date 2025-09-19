@@ -19,16 +19,16 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       staffId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'Staffs',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        allowNull: true,
+        type: Sequelize.INTEGER
       },
       changeId: {
+        allowNull: true,
         type: Sequelize.INTEGER,
+      },
+      smen: {
+        allowNull: true,
+        type: Sequelize.STRING
       },
       name: {
         allowNull: true,
@@ -47,6 +47,22 @@ module.exports = {
         type: Sequelize.STRING
       },
       time2: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
+      errortime: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
+      errortime2: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
+      owerall: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
+      summa: {
         allowNull: true,
         type: Sequelize.STRING
       },
@@ -69,6 +85,10 @@ module.exports = {
       status2: {
         allowNull: true,
         type: Sequelize.STRING
+      },
+      online: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,

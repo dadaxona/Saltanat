@@ -4,8 +4,9 @@ const { Op } = require("sequelize");
 const HelpControl = require("./Help/HelpControl");
 class AnalizControl {
     async Event (req, res) {
-        const rawEvent = req.body.event_log;
-        const event = JSON.parse(rawEvent);
+        // const rawEvent = req.body.event_log;
+        const event = req.body.event_log;
+        // const event = JSON.parse(rawEvent);
         if (event.AccessControllerEvent?.employeeNoString) {
             const { today } = new HelpControl().dateTime()
             const employeeNo = event.AccessControllerEvent?.employeeNoString || null;            
@@ -30,11 +31,11 @@ class AnalizControl {
                         await new HelpControl(result, Analiz).create2(deffrent);
                     }
                 } else {
-                    if (result && String(result.date) !== String(today)) {
+                    // if (result && String(result.date) !== String(today)) {
                         result.date = today;
                         await result.save()
                         await new HelpControl(result, Analiz).create()
-                    }
+                    // } 
                 }
             }
         }
@@ -43,8 +44,9 @@ class AnalizControl {
 
     async Event2 (req, res) {
         // const rawEvent = req.body.AccessControllerEvent;
-        const rawEvent = req.body.event_log;
-        const event = JSON.parse(rawEvent);
+        // const rawEvent = req.body.event_log;
+        const event = req.body.event_log;
+        // const event = JSON.parse(rawEvent);
         if (event.AccessControllerEvent?.employeeNoString) {
             const { today } = new HelpControl().dateTime();
             const employeeNo = event.AccessControllerEvent?.employeeNoString || null;
@@ -63,15 +65,7 @@ class AnalizControl {
                         await new HelpControl(result, Analiz).update2(deffrent);
                     }
                 } else {
-                    const prevDateObj = new Date(today);
-                    prevDateObj.setDate(prevDateObj.getDate() - 1);
-                    const prevDate = prevDateObj.toISOString().split('T')[0];
-                    if ((result.Change.smen === "Kun" && String(result.date) === String(today)) ||
-                        (result.Change.smen === "Tun" && (String(result.date) === String(today) || String(result.date) === String(prevDate))) || 
-                        (result.Change.smen === "To'liq" && String(result.date) === String(prevDate))
-                    ) {
-                        await new HelpControl(result, Analiz).update();
-                    }
+                    await new HelpControl(result, Analiz).update();
                 }
             }
         }

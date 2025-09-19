@@ -19,13 +19,7 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       staffId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'Staffs',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        type: Sequelize.INTEGER
       },
       count: {
         allowNull: true,

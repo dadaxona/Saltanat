@@ -19,12 +19,19 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       smen: {
+        allowNull: true,
         type: Sequelize.STRING
       },
       time: {
+        allowNull: true,
         type: Sequelize.STRING
       },
+      day: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN
+      },
       time2: {
+        allowNull: true,
         type: Sequelize.STRING
       },
       createdAt: {

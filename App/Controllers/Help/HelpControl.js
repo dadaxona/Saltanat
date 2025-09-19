@@ -1,4 +1,4 @@
-const { Control, Pay } = require('../../../models');
+const { Control, Pay, Part } = require('../../../models');
 const { Op } = require("sequelize");
 class HelpControl {
     constructor (staff, analiz) {
@@ -8,10 +8,12 @@ class HelpControl {
 
     dateTime () {
         const todayData = new Date();
+        // const today = '2025-09-18';
         const today = todayData.toISOString().split('T')[0];
         const times = todayData.toLocaleTimeString("uz-UZ", { timeZone: "Asia/Tashkent", hour12: false });
         const [clock, minut, secound] = times.split(':')
         const [yyyy, mm, dd] = today.split('-')
+        // const time = `01:03`
         const time = `${clock}:${minut}`
         return {today, yyyy, mm, dd, time}
     }
@@ -47,6 +49,49 @@ class HelpControl {
     }
 
     async create() {
+        const results = await this.analiz.findOne({ 
+            order: [['id', 'DESC']],
+            where: { staffId: this.staff.id, day: this.staff.date }
+        });
+        if (!results) {
+            await this.create_ftaff()
+        } else {
+            if (!results.online) {
+                await this.create_ftaff()
+            }
+        }
+    }
+
+    tim(jami, n) {        
+        if (jami >= 3600) {
+            let a = jami - 3600;
+            n++;
+            return this.tim(a, n)
+        } else {
+            return n;
+        }
+    }
+
+    async hisob(realtime, stafftime) {
+        const jami = realtime - stafftime;
+        const tim2 = this.tim(jami, 0)
+        if (tim2 > 0) {
+            const part = await Part.findOne({
+                where: {superId: this.staff.superId, part: tim2},
+                attributes: ['result']
+            });
+            if (part) {
+                const a = Number(this.staff.money) / 100;
+                const natija = a * Number(part.result);
+                return {natija, jami};
+            }
+        } else {
+            const natija = 0;
+            return {natija, jami};
+        }
+    }
+
+    async create_ftaff() {
         const { today, yyyy, mm, dd, time } = this.dateTime();
         const staffkirish = this.staff.Change.time;
         
@@ -55,11 +100,15 @@ class HelpControl {
 
         const stafftime = staffsoat * 3600 + staffminut * 60;
         const realtime = realsoat * 3600 + realminut * 60;
-        if (realtime > stafftime) {
+        
+        const check = realtime > stafftime ? true : false;
+        if (check) {
+            const {natija, jami} = await this.hisob(realtime, stafftime)
             await this.analiz.create({
                 superId: this.staff.superId,
                 staffId: this.staff.id,
                 changeId: this.staff.Change.id,
+                smen: this.staff.Change.smen,
                 name: this.staff.name,
                 lastname: this.staff.lastname,
                 middlename: this.staff.middlename,
@@ -67,14 +116,18 @@ class HelpControl {
                 day: today,
                 month: `${yyyy}-${mm}`,
                 year: yyyy,
-                status: 'false'
+                status: 'false',
+                errortime: jami,
+                summa: natija,
+                online: true
             });
-            await this.control(this.staff.id, this.staff.superId);
+            return await this.control(this.staff.id, this.staff.superId)
         } else {
             await this.analiz.create({
                 superId: this.staff.superId,
                 staffId: this.staff.id,
                 changeId: this.staff.Change.id,
+                smen: this.staff.Change.smen,
                 name: this.staff.name,
                 lastname: this.staff.lastname,
                 middlename: this.staff.middlename,
@@ -82,10 +135,13 @@ class HelpControl {
                 day: today,
                 month: `${yyyy}-${mm}`,
                 year: yyyy,
-                status: 'true'
+                status: 'true',
+                errortime: 0,
+                summa: 0,
+                online: true
             });
+            return;
         }
-        return;
     }
 
     async closeTime (kirish) {
@@ -122,6 +178,7 @@ class HelpControl {
                 date: `${yyyy}-${mm}`
             });
         }
+        return {jami3};
     }
 
     async closeTime2 (kirish) {
@@ -159,41 +216,95 @@ class HelpControl {
                 date: `${yyyy}-${mm}`
             });
         }
+        return {jami3}
     }
 
     async update() {
-        const { today, yyyy, mm, dd, time } = this.dateTime();
-        const smen = this.staff.Change.smen;
+        const {today, yyyy, mm, dd, time } = this.dateTime();
+        const smen = this.staff.Change.day;
         const stafftime2 = this.staff.Change.time2;
         const [staffsoat, staffminut] = stafftime2.split(":").map(Number);
         const [realsoat, realminut] = time.split(":").map(Number);
         
         let stafftugash = staffsoat * 3600 + staffminut * 60;
         let realtime = realsoat * 3600 + realminut * 60;
-        
-        const yakshanba = new Date();
-        if (yakshanba.getDay() === 0) {
-            realtime += 3600;
-            if (realtime < 0) realtime = 0;
-        }
-        const workDay = this.staff.date;
+        if (smen) {
+            const tu = new Date();
+            const yesterday = new Date(tu);
+            yesterday.setDate(tu.getDate() - 1);
+            const date = yesterday.toISOString().split('T')[0];
+            const results2 = await this.analiz.findOne({
+                order: [['id', 'DESC']],
+                where: { staffId: this.staff.id, day: String(date) }
+            });
+            if (results2) {
+                const check = realtime > stafftugash ? true : false;
+                const {jami3} = await this.closeTime2(results2.time);
+                // const [sta, staffmi] = results2.time.split(":").map(Number);
+                // const [reals, realmi] = time.split(":").map(Number);
 
-        const results = await this.analiz.findOne({ where: { staffId: this.staff.id, day: workDay }});
-        if (results) {
-            if (smen === "Kun") {
+                // const kirish = sta * 3600 + staffmi * 60;
+                // const chiqish = reals * 3600 + realmi * 60;
+                // const jami = chiqish - kirish;
+
+                results2.owerall = jami3;
+                results2.time2 = time;
+                results2.status2 = check ? 'true' : 'false';
+                results2.errortime2 = check ? 0 : stafftugash - realtime;
+                results2.online = false;
+                await results2.save();
+                return await this.control2(this.staff.id, this.staff.superId)
+            }
+            return;
+        } else {
+            const results = await this.analiz.findOne({
+                order: [['id', 'DESC']],
+                where: { staffId: this.staff.id, day: String(today) }
+            });
+            if (results) {
                 await this.closeTime(results.time);
-            }
-            if (smen === "Tun") {
-                await this.closeTime2(results.time);
-            }
-            if (smen === "To'liq") {
-                await this.closeFullTime(results.time);
-            }
-            results.time2 = time;
-            results.status2 = realtime > stafftugash ? 'true' : 'false';
-            await results.save();
-            if (realtime < stafftugash) {
-                await this.control2(this.staff.id, this.staff.superId);
+                const check = realtime > stafftugash ? true : false;
+                const [sta, staffmi] = results.time.split(":").map(Number);
+                const [reals, realmi] = time.split(":").map(Number);
+                
+                const kirish = sta * 3600 + staffmi * 60;
+                const chiqish = reals * 3600 + realmi * 60;
+                const jami = chiqish - kirish;
+
+                results.owerall = jami;
+                results.time2 = time;
+                results.status2 = check ? 'true' : 'false';
+                results.online = false;
+                results.errortime2 = 0;
+                await results.save();
+                return !check ? await this.control2(this.staff.id, this.staff.superId) : null;
+            } else {
+                const tod = new Date();
+                const yesterday = new Date(tod);
+                yesterday.setDate(tod.getDate() - 1);
+                const date2 = yesterday.toISOString().split('T')[0];
+                const results2 = await this.analiz.findOne({
+                    order: [['id', 'DESC']],
+                    where: { staffId: this.staff.id, day: String(date2) }
+                });
+                if (results2) {
+                    await this.closeTime2(results2.time);
+                    const [sta, staffmi] = results2.time.split(":").map(Number);
+                    const [sta2, staffmi2] = '23:59'.split(":").map(Number);
+                    const [reals, realmi] = time.split(":").map(Number);
+                    const kirish = sta * 3600 + staffmi * 60;
+                    const chiqish = reals * 3600 + realmi * 60;
+                    const chiqish2 = sta2 * 3600 + staffmi2 * 60;
+                    const jami = chiqish2 - kirish;
+                    const jami2 = jami + chiqish;
+
+                    results2.owerall = String(jami2);
+                    results2.time2 = time;
+                    results2.status2 = 'true';
+                    results2.online = false;
+                    results2.errortime2 = 0;
+                    await results2.save();
+                }
             }
             return;
         }
@@ -257,6 +368,7 @@ class HelpControl {
                 superId: this.staff.superId,
                 staffId: this.staff.id,
                 changeId: this.staff.Change.id,
+                smen: this.staff.Change.smen,
                 name: this.staff.name,
                 lastname: this.staff.lastname,
                 middlename: this.staff.middlename,
@@ -275,6 +387,7 @@ class HelpControl {
                 superId: this.staff.superId,
                 staffId: this.staff.id,
                 changeId: this.staff.Change.id,
+                smen: this.staff.Change.smen,
                 name: this.staff.name,
                 lastname: this.staff.lastname,
                 middlename: this.staff.middlename,
@@ -291,10 +404,9 @@ class HelpControl {
         return;
     }
 
-
     async update2(deffrent) {
         const { today, yyyy, mm, dd, time } = this.dateTime();
-        const smen = this.staff.Change.smen;
+        const smen = this.staff.Change.day;
         let stafftime2 = ''
 
         if (deffrent.time) {
@@ -309,30 +421,93 @@ class HelpControl {
         
         let stafftugash = staffsoat * 3600 + staffminut * 60;
         let realtime = realsoat * 3600 + realminut * 60;
-        const workDay = this.staff.date;
+        if (smen) {
+            const tu = new Date();
+            const yesterday = new Date(tu);
+            yesterday.setDate(tu.getDate() - 1);
+            const date = yesterday.toISOString().split('T')[0];
+            const results2 = await this.analiz.findOne({
+                order: [['id', 'DESC']],
+                where: { staffId: this.staff.id, day: String(date) }
+            });
+            if (results2) {
+                const check = realtime > stafftugash ? true : false;
+                const {jami3} = await this.closeTime2(results2.time);
 
-        const results = await this.analiz.findOne({ where: { staffId: this.staff.id, day: workDay }});
-        if (results) {
-            if (smen === "Kun") {
-                await this.closeTime(results.time);
-            }
-            if (smen === "Tun") {
-                await this.closeTime2(results.time);
-            }
-            if (smen === "To'liq") {
-                await this.closeFullTime(results.time);
-            }
-            results.time2 = time;
-            results.status2 = realtime > stafftugash ? 'true' : 'false';
-            await results.save();
-            this.staff.changeId = deffrent.changeId2;
-            this.staff.qor = 'false';
-            await this.staff.save()
-            if (realtime < stafftugash) {
-                await this.control2(this.staff.id, this.staff.superId);
+                results2.owerall = jami3;
+                results2.time2 = time;
+                results2.status2 = check ? 'true' : 'false';
+                results2.errortime2 = check ? 0 : stafftugash - realtime;
+                results2.online = false;
+                await results2.save();
+
+                this.staff.changeId = deffrent.changeId2;
+                this.staff.qor = 'false';
+                await this.staff.save()
+                return await this.control2(this.staff.id, this.staff.superId)
             }
             return;
-        }
+        } else {
+            const results = await this.analiz.findOne({
+                order: [['id', 'DESC']],
+                where: { staffId: this.staff.id, day: String(today) }
+            });
+            if (results) {
+                await this.closeTime(results.time);
+                const check = realtime > stafftugash ? true : false;
+                const [sta, staffmi] = results.time.split(":").map(Number);
+                const [reals, realmi] = time.split(":").map(Number);
+                
+                const kirish = sta * 3600 + staffmi * 60;
+                const chiqish = reals * 3600 + realmi * 60;
+                const jami = chiqish - kirish;
+
+                results.owerall = jami;
+                results.time2 = time;
+                results.status2 = check ? 'true' : 'false';
+                results.online = false;
+                results.errortime2 = 0;
+                await results.save();
+
+                this.staff.changeId = deffrent.changeId2;
+                this.staff.qor = 'false';
+                await this.staff.save()
+                return !check ? await this.control2(this.staff.id, this.staff.superId) : null;
+            } else {
+                const tod = new Date();
+                const yesterday = new Date(tod);
+                yesterday.setDate(tod.getDate() - 1);
+                const date2 = yesterday.toISOString().split('T')[0];
+                const results2 = await this.analiz.findOne({
+                    order: [['id', 'DESC']],
+                    where: { staffId: this.staff.id, day: String(date2) }
+                });
+                if (results2) {
+                    await this.closeTime2(results2.time);
+                    const [sta, staffmi] = results2.time.split(":").map(Number);
+                    const [sta2, staffmi2] = '23:59'.split(":").map(Number);
+                    const [reals, realmi] = time.split(":").map(Number);
+
+                    const kirish = sta * 3600 + staffmi * 60;
+                    const chiqish = reals * 3600 + realmi * 60;
+                    const chiqish2 = sta2 * 3600 + staffmi2 * 60;
+                    const jami = chiqish2 - kirish;
+                    const jami2 = jami + chiqish;
+
+                    results2.owerall = String(jami2);
+                    results2.time2 = time;
+                    results2.status2 = 'true';
+                    results2.online = false;
+                    results2.errortime2 = 0;
+                    await results2.save();
+
+                    this.staff.changeId = deffrent.changeId2;
+                    this.staff.qor = 'false';
+                    await this.staff.save()
+                }
+            }
+            return;
+        }    
     }
     
     option (query) {

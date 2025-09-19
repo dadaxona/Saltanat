@@ -19,13 +19,8 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       changeId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'Changes',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        allowNull: true,
+        type: Sequelize.INTEGER
       },
       name: {
         allowNull: true,
@@ -42,6 +37,18 @@ module.exports = {
       money: {
         allowNull: true,
         type: Sequelize.STRING
+      },
+      money: {
+        allowNull: true,
+        type: Sequelize.STRING
+      },
+      kunlik: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN
+      },
+      oylik: {
+        allowNull: true,
+        type: Sequelize.BOOLEAN
       },
       date: {
         allowNull: true,

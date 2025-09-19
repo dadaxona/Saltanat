@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     smen: DataTypes.STRING,
     time: DataTypes.STRING,
+    day: DataTypes.BOOLEAN,
     time2: DataTypes.STRING
   }, {
     sequelize,

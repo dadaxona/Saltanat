@@ -28,15 +28,7 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    staffId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'Staffs',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
-    },
+    staffId: DataTypes.INTEGER,
     count: DataTypes.INTEGER,
     count2: DataTypes.INTEGER,
     prossent: DataTypes.STRING

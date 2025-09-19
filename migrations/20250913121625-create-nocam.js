@@ -19,13 +19,7 @@ module.exports = {
         onDelete: 'CASCADE'
       },
       changeId: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'Changes',
-          key: 'id'
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+        type: Sequelize.INTEGER
       },
       name: {
         allowNull: true,

@@ -31,26 +31,24 @@ module.exports = (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE'
     },
-    staffId: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'Staffs',
-        key: 'id'
-      },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
-    },
+    staffId: DataTypes.INTEGER,
     changeId: DataTypes.INTEGER,
+    smen: DataTypes.STRING,
     name: DataTypes.STRING,
     lastname: DataTypes.STRING,
     middlename: DataTypes.STRING,
     time: DataTypes.STRING,
     time2: DataTypes.STRING,
+    errortime: DataTypes.STRING,
+    errortime2: DataTypes.STRING,
+    owerall: DataTypes.STRING,
+    summa: DataTypes.STRING,
     day: DataTypes.STRING,
     month: DataTypes.STRING,
     year: DataTypes.STRING,
     status: DataTypes.STRING,
-    status2: DataTypes.STRING
+    status2: DataTypes.STRING,
+    online: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Analiz',
